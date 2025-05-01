@@ -5,7 +5,8 @@ import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogTrigger, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Car as CarIcon, Info, Whatsapp } from "lucide-react";
+import { Car as CarIcon, Info } from "lucide-react";
+import { WhatsappIcon } from "./icons";
 import CarDetailsModal from "./CarDetailsModal";
 
 interface CarCardProps {
@@ -76,7 +77,7 @@ export default function CarCard({ car }: CarCardProps) {
               className="flex-1"
             >
               <Button className="w-full bg-[#25D366] hover:bg-[#25D366]/90">
-                <Whatsapp className="h-4 w-4 mr-2" />
+                <WhatsappIcon className="h-4 w-4 mr-2" />
                 WhatsApp
               </Button>
             </a>

@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, MapPin, Phone, Smartphone, Send, Instagram, Whatsapp } from "lucide-react";
+import { Mail, MapPin, Phone, Smartphone, Send, Instagram } from "lucide-react";
+import { WhatsappIcon } from "@/components/icons";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -204,7 +205,7 @@ export default function ContactPage() {
                       rel="noopener noreferrer"
                       className="bg-secondary hover:bg-secondary/80 p-3 rounded-full"
                     >
-                      <Whatsapp className="h-5 w-5" />
+                      <WhatsappIcon className="h-5 w-5" />
                     </a>
                   </div>
                 </div>

@@ -6,7 +6,8 @@ import SearchFilters from "@/components/SearchFilters";
 import CarList from "@/components/CarList";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Car, Instagram, Whatsapp } from "lucide-react";
+import { Car, Instagram } from "lucide-react";
+import { WhatsappIcon } from "@/components/icons";
 
 export default function HomePage() {
   return (
@@ -94,7 +95,7 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 className="bg-[#25D366] text-white py-3 px-6 rounded-lg flex items-center"
               >
-                <Whatsapp className="h-5 w-5 mr-2" />
+                <WhatsappIcon className="h-5 w-5 mr-2" />
                 WhatsApp
               </a>
             </div>

@@ -1,5 +1,6 @@
 
-import { Instagram, Mail, MapPin, Phone, Smartphone, Whatsapp } from "lucide-react";
+import { Instagram, Mail, MapPin, Phone, Smartphone } from "lucide-react";
+import { WhatsappIcon } from "./icons";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 
@@ -32,7 +33,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="bg-crimson hover:bg-crimson/90 text-white p-2 rounded-full"
               >
-                <Whatsapp className="h-5 w-5" />
+                <WhatsappIcon className="h-5 w-5" />
               </a>
             </div>
           </div>

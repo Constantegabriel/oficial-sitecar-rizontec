@@ -4,7 +4,8 @@ import { Car } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Whatsapp, Instagram, ChevronLeft, ChevronRight } from "lucide-react";
+import { Instagram, ChevronLeft, ChevronRight } from "lucide-react";
+import { WhatsappIcon } from "./icons";
 import { useState } from "react";
 import { DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 
@@ -148,7 +149,7 @@ export default function CarDetailsModal({ car }: CarDetailsModalProps) {
           className="flex-1"
         >
           <Button className="w-full bg-[#25D366] hover:bg-[#25D366]/90">
-            <Whatsapp className="h-4 w-4 mr-2" />
+            <WhatsappIcon className="h-4 w-4 mr-2" />
             Contato via WhatsApp
           </Button>
         </a>
