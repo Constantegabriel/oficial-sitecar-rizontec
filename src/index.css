@@ -81,3 +81,17 @@
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Prevent horizontal overflow on mobile */
+@media (max-width: 640px) {
+  .overflow-x-auto {
+    max-width: 100vw;
+    overflow-x: auto;
+  }
+  
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    width: 100%;
+  }
+}

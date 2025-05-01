@@ -40,19 +40,19 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Login Button / Dashboard Link */}
+        {/* Login Button / Dashboard Link - More subtle styling */}
         <div className="flex items-center">
           {user ? (
             <Link to="/dashboard">
-              <Button variant="outline" className="bg-transparent hover:bg-crimson/10 border-crimson text-crimson hover:text-crimson">
+              <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10">
                 Dashboard
               </Button>
             </Link>
           ) : (
             <Dialog>
               <DialogTrigger asChild>
-                <Button className="bg-crimson hover:bg-crimson/90 text-white">
-                  <LogIn className="h-4 w-4 mr-2" /> Login
+                <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10">
+                  <LogIn className="h-4 w-4 mr-1" /> Login
                 </Button>
               </DialogTrigger>
               <DialogContent>

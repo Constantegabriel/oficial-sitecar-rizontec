@@ -21,18 +21,25 @@ export default function CarCard({ car }: CarCardProps) {
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg hover:border-crimson border-2">
-      <div className="relative">
-        <div 
-          className="h-48 bg-cover bg-center"
-          style={{ backgroundImage: `url(${defaultImage})` }}
-        />
-        
-        {car.featured && (
-          <Badge className="absolute top-2 right-2 bg-crimson">
-            Destaque
-          </Badge>
-        )}
-      </div>
+      <Dialog>
+        <DialogTrigger asChild>
+          <div className="relative cursor-pointer">
+            <div 
+              className="h-48 bg-cover bg-center"
+              style={{ backgroundImage: `url(${defaultImage})` }}
+            />
+            
+            {car.featured && (
+              <Badge className="absolute top-2 right-2 bg-crimson">
+                Destaque
+              </Badge>
+            )}
+          </div>
+        </DialogTrigger>
+        <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
+          <CarDetailsModal car={car} />
+        </DialogContent>
+      </Dialog>
       
       <CardContent className="p-4">
         <div className="flex flex-col space-y-2">
@@ -65,7 +72,7 @@ export default function CarCard({ car }: CarCardProps) {
                   Detalhes
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-auto">
+              <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
                 <CarDetailsModal car={car} />
               </DialogContent>
             </Dialog>

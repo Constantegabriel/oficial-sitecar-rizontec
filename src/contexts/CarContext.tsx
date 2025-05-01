@@ -2,6 +2,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Car, Transaction, CarFilters } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase client setup
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Sample car data
 const initialCars: Car[] = [
@@ -89,9 +95,9 @@ interface CarContextType {
   cars: Car[];
   filteredCars: Car[];
   transactions: Transaction[];
-  addCar: (car: Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => void;
-  updateCar: (id: string, car: Partial<Car>) => void;
-  deleteCar: (id: string, status: 'sold' | 'exchanged', amount: number) => void;
+  addCar: (car: Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => Promise<void>;
+  updateCar: (id: string, car: Partial<Car>) => Promise<void>;
+  deleteCar: (id: string, status: 'sold' | 'exchanged', amount: number) => Promise<void>;
   setFilters: (filters: CarFilters) => void;
   clearFilters: () => void;
   getCarById: (id: string) => Car | undefined;
@@ -142,65 +148,189 @@ export function CarProvider({ children }: { children: ReactNode }) {
     setFilteredCars(filtered);
   }, [cars, filters]);
 
-  const addCar = (carData: Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
-    const now = new Date().toISOString();
-    const newCar: Car = {
-      ...carData,
-      id: `car-${Date.now()}`,
-      status: 'available',
-      createdAt: now,
-      updatedAt: now
-    };
+  // Sync with Supabase on component mount
+  useEffect(() => {
+    syncWithSupabase();
     
-    setCars(prevCars => [...prevCars, newCar]);
-    toast({
-      title: 'Anúncio adicionado',
-      description: `${newCar.brand} ${newCar.model} foi adicionado ao estoque.`
-    });
+    // Subscribe to Supabase real-time changes
+    const carsSubscription = supabase
+      .channel('cars-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, payload => {
+        console.log('Supabase real-time update:', payload);
+        syncWithSupabase(); // Refresh data on any changes
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(carsSubscription);
+    };
+  }, []);
+
+  // Sync data with Supabase
+  const syncWithSupabase = async () => {
+    try {
+      // Check if the table exists first
+      const { data: tableExists } = await supabase
+        .from('cars')
+        .select('id')
+        .limit(1);
+      
+      // If table doesn't exist yet, we'll use local data
+      if (tableExists === null) {
+        console.log('Supabase table not found, using local data');
+        return;
+      }
+      
+      // Fetch cars from Supabase
+      const { data: supabaseCars, error } = await supabase
+        .from('cars')
+        .select('*');
+        
+      if (error) throw error;
+      
+      if (supabaseCars && supabaseCars.length > 0) {
+        console.log('Loaded cars from Supabase:', supabaseCars.length);
+        // Replace local data with Supabase data
+        setCars(supabaseCars as Car[]);
+      } else {
+        // If no data in Supabase yet, push local data to Supabase
+        console.log('No cars in Supabase, initializing with local data');
+        for (const car of cars) {
+          await supabase.from('cars').upsert(car);
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing with Supabase:', error);
+    }
   };
 
-  const updateCar = (id: string, carData: Partial<Car>) => {
-    setCars(prevCars => 
-      prevCars.map(car => 
-        car.id === id 
-          ? { ...car, ...carData, updatedAt: new Date().toISOString() } 
-          : car
-      )
-    );
-    toast({
-      title: 'Anúncio atualizado',
-      description: 'As alterações foram salvas com sucesso.'
-    });
+  const addCar = async (carData: Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
+    try {
+      const now = new Date().toISOString();
+      const newCar: Car = {
+        ...carData,
+        id: `car-${Date.now()}`,
+        status: 'available',
+        createdAt: now,
+        updatedAt: now
+      };
+      
+      // Add to local state
+      setCars(prevCars => [...prevCars, newCar]);
+      
+      // Try to add to Supabase if available
+      if (supabaseUrl && supabaseKey) {
+        const { error } = await supabase.from('cars').insert(newCar);
+        if (error) console.error('Supabase error adding car:', error);
+      }
+      
+      toast({
+        title: 'Anúncio adicionado',
+        description: `${newCar.brand} ${newCar.model} foi adicionado ao estoque.`
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error adding car:', error);
+      return Promise.reject(error);
+    }
   };
 
-  const deleteCar = (id: string, status: 'sold' | 'exchanged', amount: number) => {
-    const car = cars.find(c => c.id === id);
-    if (!car) return;
+  const updateCar = async (id: string, carData: Partial<Car>) => {
+    try {
+      const updatedCar = {
+        ...carData,
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Update local state
+      setCars(prevCars => 
+        prevCars.map(car => 
+          car.id === id 
+            ? { ...car, ...updatedCar } 
+            : car
+        )
+      );
+      
+      // Try to update in Supabase if available
+      if (supabaseUrl && supabaseKey) {
+        const { error } = await supabase
+          .from('cars')
+          .update(updatedCar)
+          .eq('id', id);
+          
+        if (error) console.error('Supabase error updating car:', error);
+      }
+      
+      toast({
+        title: 'Anúncio atualizado',
+        description: 'As alterações foram salvas com sucesso.'
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error updating car:', error);
+      return Promise.reject(error);
+    }
+  };
 
-    // Update car status
-    setCars(prevCars => 
-      prevCars.map(c => 
-        c.id === id 
-          ? { ...c, status, updatedAt: new Date().toISOString() } 
-          : c
-      )
-    );
+  const deleteCar = async (id: string, status: 'sold' | 'exchanged', amount: number) => {
+    try {
+      const car = cars.find(c => c.id === id);
+      if (!car) return Promise.reject(new Error('Car not found'));
 
-    // Create transaction
-    const newTransaction: Transaction = {
-      id: `transaction-${Date.now()}`,
-      carId: id,
-      type: status === 'sold' ? 'sale' : 'exchange',
-      amount,
-      date: new Date().toISOString(),
-    };
-    
-    setTransactions(prev => [...prev, newTransaction]);
-    
-    toast({
-      title: status === 'sold' ? 'Carro vendido' : 'Carro trocado',
-      description: `${car.brand} ${car.model} foi ${status === 'sold' ? 'vendido' : 'trocado'} por R$ ${amount.toLocaleString('pt-BR')}.`
-    });
+      // Update car status
+      const updatedCar = {
+        status, 
+        updatedAt: new Date().toISOString()
+      };
+      
+      setCars(prevCars => 
+        prevCars.map(c => 
+          c.id === id 
+            ? { ...c, ...updatedCar } 
+            : c
+        )
+      );
+
+      // Create transaction
+      const newTransaction: Transaction = {
+        id: `transaction-${Date.now()}`,
+        carId: id,
+        type: status === 'sold' ? 'sale' : 'exchange',
+        amount,
+        date: new Date().toISOString(),
+      };
+      
+      setTransactions(prev => [...prev, newTransaction]);
+      
+      // Try to update in Supabase if available
+      if (supabaseUrl && supabaseKey) {
+        const { error: carError } = await supabase
+          .from('cars')
+          .update(updatedCar)
+          .eq('id', id);
+          
+        if (carError) console.error('Supabase error updating car status:', carError);
+        
+        // Add transaction to Supabase if table exists
+        try {
+          await supabase.from('transactions').insert(newTransaction);
+        } catch (transactionError) {
+          console.error('Supabase error adding transaction:', transactionError);
+        }
+      }
+      
+      toast({
+        title: status === 'sold' ? 'Carro vendido' : 'Carro trocado',
+        description: `${car.brand} ${car.model} foi ${status === 'sold' ? 'vendido' : 'trocado'} por R$ ${amount.toLocaleString('pt-BR')}.`
+      });
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error processing car transaction:', error);
+      return Promise.reject(error);
+    }
   };
 
   const applyFilters = (newFilters: CarFilters) => {

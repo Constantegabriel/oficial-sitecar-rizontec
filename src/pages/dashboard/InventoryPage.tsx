@@ -7,15 +7,17 @@ import { formatCurrency } from "@/lib/formatters";
 import { Edit, Trash2, Search, PlusCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InventoryPage() {
   const { cars, deleteCar, updateCar } = useCars();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCarId, setSelectedCarId] = useState<string | null>(null);
   const [transactionAmount, setTransactionAmount] = useState<number>(0);
-  const [transactionType, setTransactionType] = useState<'sold' | 'exchanged'>('sold');
+  const [transactionType, setTransactionType] = useState<'sold' | 'exchanged' | 'deleted'>('sold');
   const [carToEdit, setCarToEdit] = useState<any>(null);
   
   // Filter cars based on search term
@@ -33,11 +35,26 @@ export default function InventoryPage() {
   
   const handleDelete = () => {
     if (selectedCarId) {
-      deleteCar(
-        selectedCarId, 
-        transactionType, 
-        transactionAmount
-      );
+      if (transactionType === 'deleted') {
+        // Just remove the car from available list by marking it as "deleted"
+        updateCar(selectedCarId, { 
+          status: 'deleted', 
+          updatedAt: new Date().toISOString() 
+        });
+        
+        toast({
+          title: "Anúncio excluído",
+          description: "O anúncio foi removido do estoque"
+        });
+      } else {
+        // Process as a sale or exchange transaction
+        deleteCar(
+          selectedCarId, 
+          transactionType, 
+          transactionAmount
+        );
+      }
+      
       setSelectedCarId(null);
       setTransactionAmount(0);
     }
@@ -74,7 +91,7 @@ export default function InventoryPage() {
         </div>
       </div>
       
-      <div className="border rounded-md">
+      <div className="border rounded-md overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -115,7 +132,7 @@ export default function InventoryPage() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="overflow-y-auto max-h-[80vh] overflow-x-hidden">
                           <DialogHeader>
                             <DialogTitle>Editar Anúncio</DialogTitle>
                           </DialogHeader>
@@ -238,12 +255,19 @@ export default function InventoryPage() {
                         <DialogContent>
                           <DialogHeader>
                             <DialogTitle>Remover Anúncio</DialogTitle>
+                            <DialogDescription>
+                              Escolha como deseja remover o anúncio do {car?.brand} {car?.model}
+                            </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4 py-4">
-                            <p>
-                              Qual o motivo da remoção do anúncio?
-                            </p>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                variant={transactionType === 'deleted' ? 'default' : 'outline'}
+                                onClick={() => setTransactionType('deleted')}
+                                className="flex-1"
+                              >
+                                Apenas Excluir
+                              </Button>
                               <Button
                                 variant={transactionType === 'sold' ? 'default' : 'outline'}
                                 onClick={() => setTransactionType('sold')}
@@ -259,18 +283,22 @@ export default function InventoryPage() {
                                 Trocado
                               </Button>
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="transaction-amount">Valor da Transação</Label>
-                              <Input 
-                                id="transaction-amount" 
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={transactionAmount}
-                                onChange={(e) => setTransactionAmount(Number(e.target.value))}
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2 pt-2">
+
+                            {transactionType !== 'deleted' && (
+                              <div className="space-y-2">
+                                <Label htmlFor="transaction-amount">Valor da Transação</Label>
+                                <Input 
+                                  id="transaction-amount" 
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={transactionAmount}
+                                  onChange={(e) => setTransactionAmount(Number(e.target.value))}
+                                />
+                              </div>
+                            )}
+
+                            <DialogFooter className="pt-2">
                               <Button 
                                 variant="outline" 
                                 onClick={() => {
@@ -286,7 +314,7 @@ export default function InventoryPage() {
                               >
                                 Confirmar
                               </Button>
-                            </div>
+                            </DialogFooter>
                           </div>
                         </DialogContent>
                       </Dialog>

@@ -36,7 +36,7 @@ export default function CarDetailsModal({ car }: CarDetailsModalProps) {
     : "https://placehold.co/800x500?text=Sem+Imagem";
 
   return (
-    <div>
+    <div className="w-full">
       <DialogHeader className="mb-4">
         <DialogTitle className="text-2xl font-bold">
           {car.brand} {car.model}
@@ -78,7 +78,7 @@ export default function CarDetailsModal({ car }: CarDetailsModalProps) {
         
         {/* Thumbnails */}
         {hasImages && (
-          <div className="flex gap-2 overflow-x-auto py-2">
+          <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar">
             {car.images.map((img, idx) => (
               <div 
                 key={idx}
