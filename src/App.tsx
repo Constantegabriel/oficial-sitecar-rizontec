@@ -18,7 +18,7 @@ import NotFound from "./pages/NotFound";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import DashboardIndex from "./pages/dashboard/DashboardIndex";
 import NewCarPage from "./pages/dashboard/NewCarPage";
-import InventoryPage as DashboardInventoryPage from "./pages/dashboard/InventoryPage";
+import { default as DashboardInventoryPage } from "./pages/dashboard/InventoryPage";
 import FinancialPage from "./pages/dashboard/FinancialPage";
 
 const queryClient = new QueryClient();
