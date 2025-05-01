@@ -12,6 +12,7 @@ import { Car } from "@/types";
 import { Trash2, Upload } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from '@supabase/supabase-js';
+import { toast } from "@/components/ui/sonner";
 
 export default function NewCarPage() {
   const [formData, setFormData] = useState({
@@ -29,7 +30,7 @@ export default function NewCarPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { addCar } = useCars();
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -102,13 +103,32 @@ export default function NewCarPage() {
   };
 
   const uploadToSupabase = async (files: File[]) => {
-    const validFiles = files.filter(file => file !== null);
+    const validFiles = files.filter(file => file !== null && file !== undefined);
     if (validFiles.length === 0) return [];
 
     setIsUploading(true);
     const imageUrls: string[] = [];
 
     try {
+      // Check if bucket exists, create if it doesn't
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const carsBucketExists = buckets?.some(bucket => bucket.name === 'cars');
+      
+      if (!carsBucketExists) {
+        const { data: newBucket, error: bucketError } = await supabase.storage.createBucket('cars', {
+          public: true,
+          allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+          fileSizeLimit: 5242880, // 5MB
+        });
+        
+        if (bucketError) {
+          console.error("Error creating bucket:", bucketError);
+          toast("Erro ao criar bucket de armazenamento", {
+            description: bucketError.message
+          });
+        }
+      }
+
       for (const file of validFiles) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
@@ -119,7 +139,13 @@ export default function NewCarPage() {
           .from('cars')
           .upload(filePath, file);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Upload error for file:', file.name, error);
+          toast("Erro ao fazer upload", {
+            description: `Erro ao enviar ${file.name}: ${error.message}`
+          });
+          continue;
+        }
 
         // Get public URL of the uploaded file
         const { data: publicUrlData } = supabase
@@ -127,15 +153,15 @@ export default function NewCarPage() {
           .from('cars')
           .getPublicUrl(filePath);
 
-        imageUrls.push(publicUrlData.publicUrl);
+        if (publicUrlData?.publicUrl) {
+          imageUrls.push(publicUrlData.publicUrl);
+        }
       }
       return imageUrls;
     } catch (error: any) {
       console.error('Error uploading images:', error);
-      toast({
-        title: "Erro ao enviar imagens",
-        description: error.message || "Ocorreu um erro ao enviar as imagens",
-        variant: "destructive"
+      toast("Erro ao enviar imagens", {
+        description: error.message || "Ocorreu um erro ao enviar as imagens"
       });
       return [];
     } finally {
@@ -151,7 +177,7 @@ export default function NewCarPage() {
       let imagesToSave = formData.images.filter(img => img.trim() !== '');
       
       // If we have physical files to upload, do that first
-      if (imageFiles.some(file => file !== null)) {
+      if (imageFiles.some(file => file !== null && file !== undefined)) {
         const uploadedUrls = await uploadToSupabase(imageFiles);
         if (uploadedUrls.length > 0) {
           // Replace any local file URLs with the uploaded ones
@@ -166,20 +192,17 @@ export default function NewCarPage() {
       };
       
       // Add the car with the proper type to satisfy TypeScript
-      addCar(carData as Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>);
+      await addCar(carData as Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>);
       
-      toast({
-        title: "Carro adicionado com sucesso",
+      toast("Carro adicionado com sucesso", {
         description: "O carro foi adicionado ao inventário"
       });
       
       // Navigate back to inventory
       navigate("/dashboard/estoque");
     } catch (error: any) {
-      toast({
-        title: "Erro ao adicionar carro",
-        description: error.message || "Ocorreu um erro ao adicionar o carro",
-        variant: "destructive"
+      toast("Erro ao adicionar carro", {
+        description: error.message || "Ocorreu um erro ao adicionar o carro"
       });
     } finally {
       setIsSubmitting(false);

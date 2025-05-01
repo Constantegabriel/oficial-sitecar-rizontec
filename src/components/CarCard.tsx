@@ -5,7 +5,7 @@ import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Dialog, DialogTrigger, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { Car as CarIcon, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { WhatsappIcon } from "./icons";
 import CarDetailsModal from "./CarDetailsModal";
 
@@ -36,7 +36,7 @@ export default function CarCard({ car }: CarCardProps) {
             )}
           </div>
         </DialogTrigger>
-        <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto">
           <CarDetailsModal car={car} />
         </DialogContent>
       </Dialog>
@@ -72,7 +72,7 @@ export default function CarCard({ car }: CarCardProps) {
                   Detalhes
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
+              <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto">
                 <CarDetailsModal car={car} />
               </DialogContent>
             </Dialog>

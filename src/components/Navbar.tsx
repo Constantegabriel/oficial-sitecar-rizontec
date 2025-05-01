@@ -44,18 +44,18 @@ export default function Navbar() {
         <div className="flex items-center">
           {user ? (
             <Link to="/dashboard">
-              <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10">
+              <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10 opacity-80 hover:opacity-100">
                 Dashboard
               </Button>
             </Link>
           ) : (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10">
+                <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10 opacity-80 hover:opacity-100">
                   <LogIn className="h-4 w-4 mr-1" /> Login
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-md overflow-hidden">
                 <LoginForm />
               </DialogContent>
             </Dialog>
