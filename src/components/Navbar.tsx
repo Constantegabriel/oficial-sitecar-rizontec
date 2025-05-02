@@ -38,10 +38,8 @@ export default function Navbar() {
           <Link to="/contato" className="text-sm hover:text-crimson transition-colors">
             Contato
           </Link>
-        </div>
-
-        {/* Login Button / Dashboard Link - More subtle styling */}
-        <div className="flex items-center">
+          
+          {/* Login Button / Dashboard Link no Desktop */}
           {user ? (
             <Link to="/dashboard">
               <Button variant="ghost" size="sm" className="text-crimson hover:bg-crimson/10 opacity-80 hover:opacity-100">
@@ -60,58 +58,90 @@ export default function Navbar() {
               </DialogContent>
             </Dialog>
           )}
-
-          {/* Mobile Menu Button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="ml-4 md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6 text-crimson" />
-            ) : (
-              <Menu className="h-6 w-6 text-crimson" />
-            )}
-          </Button>
         </div>
+
+        {/* Mobile Menu Button (sem o botão de login) */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? (
+            <X className="h-6 w-6 text-crimson" />
+          ) : (
+            <Menu className="h-6 w-6 text-crimson" />
+          )}
+        </Button>
       </nav>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden animate-fade-in">
-          <div className="px-4 py-2 space-y-2 bg-secondary/50">
+      {/* Mobile Menu com animação */}
+      <div 
+        className={`md:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm transform transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+        style={{ top: '61px', height: 'calc(100vh - 61px)' }} // Ajusta para começar logo abaixo do header
+      >
+        <div className="px-4 py-6 space-y-4 flex flex-col h-full">
+          <div className="space-y-4">
             <Link 
               to="/"
-              className="block p-2 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Início
             </Link>
             <Link 
               to="/estoque"
-              className="block p-2 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Estoque
             </Link>
             <Link 
               to="/sobre"
-              className="block p-2 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Sobre
             </Link>
             <Link 
               to="/contato"
-              className="block p-2 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary"
               onClick={() => setMobileMenuOpen(false)}
             >
               Contato
             </Link>
+            
+            {/* Login Button / Dashboard Link no Menu Mobile */}
+            <div className="pt-4 border-t border-border">
+              {user ? (
+                <Link 
+                  to="/dashboard"
+                  className="block w-full"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Button variant="outline" className="w-full justify-center">
+                    <span className="mr-2">Dashboard</span>
+                  </Button>
+                </Link>
+              ) : (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full justify-center">
+                      <LogIn className="h-4 w-4 mr-2" />
+                      <span>Login</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md overflow-hidden">
+                    <LoginForm />
+                  </DialogContent>
+                </Dialog>
+              )}
+            </div>
           </div>
         </div>
-      )}
+      </div>
     </header>
   );
 }

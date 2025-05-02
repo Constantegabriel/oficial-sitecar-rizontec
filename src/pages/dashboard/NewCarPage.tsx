@@ -24,7 +24,7 @@ export default function NewCarPage() {
     km: 0,
     color: "",
     description: "",
-    images: ["", "", "", "", ""], // Aumentado para 5 imagens
+    images: Array(10).fill(""), // Aumentado para 10 imagens
     featured: false
   });
   
@@ -85,7 +85,7 @@ export default function NewCarPage() {
       const emptyIndex = newImages.findIndex(img => img === "");
       const targetIndex = emptyIndex >= 0 ? emptyIndex : newImages.length;
       
-      if (targetIndex < 5) { // Limit to 5 images
+      if (targetIndex < 10) { // Limit to 10 images
         // Create a preview URL
         const imageUrl = URL.createObjectURL(file);
         
@@ -99,7 +99,7 @@ export default function NewCarPage() {
     setImageFiles(newFiles);
     setFormData({
       ...formData,
-      images: newImages.slice(0, 5) // Ensure we only keep 5 images
+      images: newImages.slice(0, 10) // Ensure we only keep 10 images
     });
   };
 
@@ -360,9 +360,9 @@ export default function NewCarPage() {
               
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Imagens (máximo 5)</Label>
+                  <Label>Imagens (máximo 10)</Label>
                   <p className="text-xs text-muted-foreground">
-                    {formData.images.filter(img => img !== "").length}/5 imagens
+                    {formData.images.filter(img => img !== "").length}/10 imagens
                   </p>
                 </div>
                 

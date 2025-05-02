@@ -43,7 +43,7 @@ export default function CarCard({ car }: CarCardProps) {
           )}
         </div>
         
-        <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:w-[90vw] top-[50%]">
           <DialogTitle>
             <VisuallyHidden>{car.brand} {car.model} - Detalhes</VisuallyHidden>
           </DialogTitle>
