@@ -3,12 +3,13 @@ import { Car } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Info } from "lucide-react";
 import { WhatsappIcon } from "./icons";
 import CarDetailsModal from "./CarDetailsModal";
 import { useState } from "react";
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface CarCardProps {
   car: Car;
@@ -43,6 +44,9 @@ export default function CarCard({ car }: CarCardProps) {
         </div>
         
         <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
+          <DialogTitle>
+            <VisuallyHidden>{car.brand} {car.model} - Detalhes</VisuallyHidden>
+          </DialogTitle>
           <CarDetailsModal car={car} />
         </DialogContent>
       </Dialog>

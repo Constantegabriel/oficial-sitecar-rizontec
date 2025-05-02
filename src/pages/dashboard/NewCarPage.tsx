@@ -13,6 +13,7 @@ import { Trash2, Upload } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from '@supabase/supabase-js';
 import { toast } from "@/components/ui/sonner";
+import { DialogTitle } from "@/components/ui/dialog";
 
 export default function NewCarPage() {
   const [formData, setFormData] = useState({
@@ -34,10 +35,14 @@ export default function NewCarPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize Supabase client
+  // Initialize Supabase client with proper validation
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  
+  // Create supabase client only if both URL and key are provided
+  const supabase = (supabaseUrl && supabaseKey && supabaseUrl !== 'https://your-project.supabase.co' && supabaseKey !== 'your-anon-key') 
+    ? createClient(supabaseUrl, supabaseKey)
+    : null;
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -105,6 +110,12 @@ export default function NewCarPage() {
   const uploadToSupabase = async (files: File[]) => {
     const validFiles = files.filter(file => file !== null && file !== undefined);
     if (validFiles.length === 0) return [];
+    
+    // Skip uploading if Supabase client isn't initialized
+    if (!supabase) {
+      console.log("Supabase not initialized, skipping file upload");
+      return [];
+    }
 
     setIsUploading(true);
     const imageUrls: string[] = [];
