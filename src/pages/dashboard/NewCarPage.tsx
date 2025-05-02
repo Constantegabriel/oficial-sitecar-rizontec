@@ -9,7 +9,7 @@ import { useCars } from "@/contexts/CarContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Car } from "@/types";
-import { Trash2, Upload } from "lucide-react";
+import { Trash2, Upload, Images } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from '@supabase/supabase-js';
 import { toast } from "@/components/ui/sonner";
@@ -24,7 +24,7 @@ export default function NewCarPage() {
     km: 0,
     color: "",
     description: "",
-    images: ["", "", ""], // Up to 3 images (URLs or file data)
+    images: ["", "", "", "", ""], // Aumentado para 5 imagens
     featured: false
   });
   
@@ -71,18 +71,36 @@ export default function NewCarPage() {
     });
   };
 
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     
-    // Update the file list
+    // Add new files to the existing files array
     const newFiles = [...imageFiles];
-    newFiles[index] = file;
-    setImageFiles(newFiles);
+    const newImages = [...formData.images];
     
-    // Create a preview URL
-    const imageUrl = URL.createObjectURL(file);
-    handleImageChange(index, imageUrl);
+    // Process each file
+    files.forEach((file, idx) => {
+      // Find the next empty slot or use the last position
+      const emptyIndex = newImages.findIndex(img => img === "");
+      const targetIndex = emptyIndex >= 0 ? emptyIndex : newImages.length;
+      
+      if (targetIndex < 5) { // Limit to 5 images
+        // Create a preview URL
+        const imageUrl = URL.createObjectURL(file);
+        
+        // Update files and images arrays
+        newFiles[targetIndex] = file;
+        newImages[targetIndex] = imageUrl;
+      }
+    });
+    
+    // Update state
+    setImageFiles(newFiles);
+    setFormData({
+      ...formData,
+      images: newImages.slice(0, 5) // Ensure we only keep 5 images
+    });
   };
 
   const removeImage = (index: number) => {
@@ -340,58 +358,70 @@ export default function NewCarPage() {
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label>Imagens</Label>
-                <p className="text-xs text-muted-foreground mb-2">
-                  Adicione até 3 imagens para o carro
-                </p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Imagens (máximo 5)</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {formData.images.filter(img => img !== "").length}/5 imagens
+                  </p>
+                </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {[0, 1, 2].map((index) => (
-                    <div key={index} className="space-y-2">
-                      {formData.images[index] ? (
-                        <div className="relative">
+                {/* Área de upload unificada */}
+                <div className="border-2 border-dashed border-border rounded-md p-4">
+                  <div className="flex flex-col items-center justify-center">
+                    <label
+                      htmlFor="image-upload"
+                      className="cursor-pointer w-full h-32 flex flex-col items-center justify-center"
+                    >
+                      <Images className="h-12 w-12 text-muted-foreground mb-2" />
+                      <span className="text-sm text-center text-muted-foreground mb-2">
+                        Arraste suas imagens ou clique para selecionar
+                      </span>
+                      <Button type="button" variant="outline" size="sm">
+                        <Upload className="h-4 w-4 mr-2" />
+                        Selecionar Imagens
+                      </Button>
+                      <input
+                        id="image-upload"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Exibição das imagens selecionadas */}
+                {formData.images.some(img => img !== "") && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-3">
+                    {formData.images.map((image, idx) => 
+                      image && (
+                        <div key={idx} className="relative">
                           <img 
-                            src={formData.images[index]} 
-                            alt={`Imagem ${index + 1}`} 
-                            className="w-full h-32 object-cover rounded-md"
+                            src={image} 
+                            alt={`Imagem ${idx + 1}`} 
+                            className="w-full h-24 object-cover rounded-md"
                           />
                           <Button
                             type="button"
                             variant="destructive"
                             size="icon"
-                            className="absolute top-2 right-2 h-6 w-6"
-                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 h-6 w-6"
+                            onClick={() => removeImage(idx)}
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
                         </div>
-                      ) : (
-                        <div className="border-2 border-dashed border-border rounded-md h-32 flex flex-col items-center justify-center">
-                          <label
-                            htmlFor={`image-upload-${index}`}
-                            className="cursor-pointer w-full h-full flex flex-col items-center justify-center"
-                          >
-                            <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                            <span className="text-xs text-muted-foreground">Carregar imagem</span>
-                            <input
-                              id={`image-upload-${index}`}
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, index)}
-                            />
-                          </label>
-                        </div>
-                      )}
-                      <Input 
-                        placeholder="Ou informe uma URL..."
-                        value={formData.images[index]}
-                        onChange={(e) => handleImageChange(index, e.target.value)}
-                      />
-                    </div>
-                  ))}
-                </div>
+                      )
+                    )}
+                  </div>
+                )}
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  Formatos aceitos: JPG, PNG, GIF, WEBP. Tamanho máximo: 5MB por imagem.
+                </p>
               </div>
             </div>
           </div>

@@ -1,7 +1,6 @@
 
 import { useCars } from "@/contexts/CarContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { DollarSign, TrendingUp, TrendingDown, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,57 +84,51 @@ export default function FinancialPage() {
       <div>
         <h2 className="text-xl font-semibold mb-4">Histórico de Transações</h2>
         
-        <div className="border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Veículo</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Valor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedTransactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6">
-                    Nenhuma transação registrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sortedTransactions.map((transaction) => {
-                  const car = getCarDetails(transaction.carId);
-                  return (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{formatDate(transaction.date)}</TableCell>
-                      <TableCell className="font-medium">
+        <div className="space-y-3">
+          {sortedTransactions.length === 0 ? (
+            <div className="text-center py-6 bg-muted/20 rounded-md">
+              <p className="text-muted-foreground">Nenhuma transação registrada</p>
+            </div>
+          ) : (
+            sortedTransactions.map((transaction) => {
+              const car = getCarDetails(transaction.carId);
+              return (
+                <div key={transaction.id} className="border rounded-md p-4 bg-card">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                      <div className="text-sm text-muted-foreground">
+                        {formatDate(transaction.date)}
+                      </div>
+                      <div className="font-medium">
                         {car ? `${car.brand} ${car.model} (${car.year})` : 'Veículo não encontrado'}
-                      </TableCell>
-                      <TableCell>
-                        {transaction.type === 'sale' ? (
-                          <span className="flex items-center text-green-500">
-                            <TrendingUp className="h-4 w-4 mr-1" />
-                            Venda
-                          </span>
-                        ) : (
-                          <span className="flex items-center text-yellow-500">
-                            <TrendingDown className="h-4 w-4 mr-1" />
-                            Troca
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-semibold">
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      {transaction.type === 'sale' ? (
+                        <span className="flex items-center text-green-500 text-sm">
+                          <TrendingUp className="h-4 w-4 mr-1" />
+                          Venda
+                        </span>
+                      ) : (
+                        <span className="flex items-center text-yellow-500 text-sm">
+                          <TrendingDown className="h-4 w-4 mr-1" />
+                          Troca
+                        </span>
+                      )}
+                      
+                      <div className="font-bold">
                         {formatCurrency(transaction.amount)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
         
-        {transactions.length > 0 && (
+        {transactions.length > 5 && (
           <div className="flex justify-center mt-4">
             <Button variant="outline">
               Carregar Mais
