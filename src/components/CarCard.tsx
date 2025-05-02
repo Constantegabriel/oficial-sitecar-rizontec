@@ -3,17 +3,21 @@ import { Car } from "@/types";
 import { formatCurrency } from "@/lib/formatters";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Dialog, DialogTrigger, DialogContent } from "./ui/dialog";
+import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Info } from "lucide-react";
 import { WhatsappIcon } from "./icons";
 import CarDetailsModal from "./CarDetailsModal";
+import { useState } from "react";
 
 interface CarCardProps {
   car: Car;
 }
 
 export default function CarCard({ car }: CarCardProps) {
+  // State to control dialog open/close
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
   // Get default image or placeholder
   const defaultImage = car.images && car.images.length > 0 
     ? car.images[0] 
@@ -21,22 +25,24 @@ export default function CarCard({ car }: CarCardProps) {
 
   return (
     <Card className="overflow-hidden transition-all hover:shadow-lg hover:border-crimson border-2">
-      <Dialog>
-        <DialogTrigger asChild>
-          <div className="relative cursor-pointer">
-            <div 
-              className="h-48 bg-cover bg-center"
-              style={{ backgroundImage: `url(${defaultImage})` }}
-            />
-            
-            {car.featured && (
-              <Badge className="absolute top-2 right-2 bg-crimson">
-                Destaque
-              </Badge>
-            )}
-          </div>
-        </DialogTrigger>
-        <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto">
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <div 
+          className="relative cursor-pointer" 
+          onClick={() => setIsDialogOpen(true)}
+        >
+          <div 
+            className="h-48 bg-cover bg-center"
+            style={{ backgroundImage: `url(${defaultImage})` }}
+          />
+          
+          {car.featured && (
+            <Badge className="absolute top-2 right-2 bg-crimson">
+              Destaque
+            </Badge>
+          )}
+        </div>
+        
+        <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto overflow-x-hidden">
           <CarDetailsModal car={car} />
         </DialogContent>
       </Dialog>
@@ -65,17 +71,14 @@ export default function CarCard({ car }: CarCardProps) {
           </div>
           
           <div className="flex gap-2 mt-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="flex-1">
-                  <Info className="h-4 w-4 mr-2" />
-                  Detalhes
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl w-[90vw] max-h-[80vh] overflow-y-auto">
-                <CarDetailsModal car={car} />
-              </DialogContent>
-            </Dialog>
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <Info className="h-4 w-4 mr-2" />
+              Detalhes
+            </Button>
             
             <a 
               href={`https://wa.me/5511999999999?text=Olá, estou interessado no ${car.brand} ${car.model} ${car.year}`}

@@ -5,10 +5,15 @@ import { useToast } from '@/hooks/use-toast';
 import { createClient } from '@supabase/supabase-js';
 import { toast } from '@/components/ui/sonner';
 
-// Supabase client setup
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Supabase client setup with fallback values for development
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+
+// Initialize Supabase client or use mock if credentials are default fallbacks
+const isValidSupabase = supabaseUrl !== 'https://your-project.supabase.co' && supabaseKey !== 'your-anon-key';
+const supabase = isValidSupabase 
+  ? createClient(supabaseUrl, supabaseKey) 
+  : null;
 
 // Sample car data
 const initialCars: Car[] = [
@@ -152,6 +157,12 @@ export function CarProvider({ children }: { children: ReactNode }) {
 
   // Check Supabase connection
   const checkSupabaseConnection = async () => {
+    // If Supabase is not initialized due to missing credentials, return false
+    if (!supabase) {
+      console.warn("Supabase not initialized. Using local storage only.");
+      return false;
+    }
+    
     try {
       const { data, error } = await supabase.from('cars').select('count').limit(1);
       if (error) {
@@ -172,6 +183,12 @@ export function CarProvider({ children }: { children: ReactNode }) {
   // Sync with Supabase on component mount
   useEffect(() => {
     const initializeSupabase = async () => {
+      // Skip Supabase initialization if client wasn't created
+      if (!supabase) {
+        console.log("Supabase credentials not available. Running in local mode only.");
+        return;
+      }
+      
       const isConnected = await checkSupabaseConnection();
       
       if (isConnected) {
@@ -222,6 +239,8 @@ export function CarProvider({ children }: { children: ReactNode }) {
 
   // Sync data with Supabase
   const syncWithSupabase = async () => {
+    if (!supabase) return;
+    
     try {
       // Check if we can connect to Supabase
       const isConnected = await checkSupabaseConnection();
@@ -310,7 +329,7 @@ export function CarProvider({ children }: { children: ReactNode }) {
       setCars(prevCars => [...prevCars, newCar]);
       
       // Try to add to Supabase if available
-      if (isSupabaseConnected) {
+      if (isSupabaseConnected && supabase) {
         const { error } = await supabase.from('cars').insert(newCar);
         if (error) {
           console.error('Supabase error adding car:', error);
@@ -353,7 +372,7 @@ export function CarProvider({ children }: { children: ReactNode }) {
       );
       
       // Try to update in Supabase if available
-      if (isSupabaseConnected) {
+      if (isSupabaseConnected && supabase) {
         const { error } = await supabase
           .from('cars')
           .update(updatedCar)
@@ -415,7 +434,7 @@ export function CarProvider({ children }: { children: ReactNode }) {
         setTransactions(prev => [...prev, newTransaction]);
         
         // Add transaction to Supabase if connected
-        if (isSupabaseConnected) {
+        if (isSupabaseConnected && supabase) {
           try {
             await supabase.from('transactions').insert(newTransaction);
           } catch (transactionError) {
@@ -425,7 +444,7 @@ export function CarProvider({ children }: { children: ReactNode }) {
       }
       
       // Try to update in Supabase if available
-      if (isSupabaseConnected) {
+      if (isSupabaseConnected && supabase) {
         const { error: carError } = await supabase
           .from('cars')
           .update(updatedCar)
