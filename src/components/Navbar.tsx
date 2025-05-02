@@ -60,7 +60,7 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu Button (sem o botão de login) */}
+        {/* Mobile Menu Button - Removed login button here */}
         <Button 
           variant="ghost" 
           size="icon" 
@@ -75,45 +75,45 @@ export default function Navbar() {
         </Button>
       </nav>
 
-      {/* Mobile Menu com animação */}
+      {/* Mobile Menu with animation */}
       <div 
-        className={`md:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm transform transition-transform duration-300 ease-in-out ${
+        className={`md:hidden fixed inset-0 z-50 bg-background/95 backdrop-blur-sm transform transition-all duration-300 ease-in-out ${
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
-        style={{ top: '61px', height: 'calc(100vh - 61px)' }} // Ajusta para começar logo abaixo do header
+        style={{ top: '61px', height: 'calc(100vh - 61px)' }}
       >
         <div className="px-4 py-6 space-y-4 flex flex-col h-full">
           <div className="space-y-4">
             <Link 
               to="/"
-              className="block p-3 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary transition-colors transform transition-all duration-200 hover:translate-x-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               Início
             </Link>
             <Link 
               to="/estoque"
-              className="block p-3 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary transition-colors transform transition-all duration-200 hover:translate-x-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               Estoque
             </Link>
             <Link 
               to="/sobre"
-              className="block p-3 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary transition-colors transform transition-all duration-200 hover:translate-x-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               Sobre
             </Link>
             <Link 
               to="/contato"
-              className="block p-3 rounded-md hover:bg-secondary"
+              className="block p-3 rounded-md hover:bg-secondary transition-colors transform transition-all duration-200 hover:translate-x-2"
               onClick={() => setMobileMenuOpen(false)}
             >
               Contato
             </Link>
             
-            {/* Login Button / Dashboard Link no Menu Mobile */}
+            {/* Login Button / Dashboard Link in Mobile Menu */}
             <div className="pt-4 border-t border-border">
               {user ? (
                 <Link 
@@ -121,20 +121,20 @@ export default function Navbar() {
                   className="block w-full"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Button variant="outline" className="w-full justify-center">
+                  <Button variant="default" className="w-full justify-center">
                     <span className="mr-2">Dashboard</span>
                   </Button>
                 </Link>
               ) : (
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full justify-center">
+                    <Button variant="default" className="w-full justify-center">
                       <LogIn className="h-4 w-4 mr-2" />
                       <span>Login</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md overflow-hidden">
-                    <LoginForm />
+                    <LoginForm onClose={() => setMobileMenuOpen(false)} />
                   </DialogContent>
                 </Dialog>
               )}

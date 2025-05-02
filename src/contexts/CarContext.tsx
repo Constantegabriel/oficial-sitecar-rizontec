@@ -1,19 +1,8 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Car, Transaction, CarFilters } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@supabase/supabase-js';
 import { toast } from '@/components/ui/sonner';
-
-// Supabase client setup with fallback values for development
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
-
-// Initialize Supabase client or use mock if credentials are default fallbacks
-const isValidSupabase = supabaseUrl !== 'https://your-project.supabase.co' && supabaseKey !== 'your-anon-key';
-const supabase = isValidSupabase 
-  ? createClient(supabaseUrl, supabaseKey) 
-  : null;
+import { supabase, checkSupabaseConnection, initializeSupabaseTables } from '@/lib/supabase';
 
 // Sample car data
 const initialCars: Car[] = [
@@ -155,48 +144,22 @@ export function CarProvider({ children }: { children: ReactNode }) {
     setFilteredCars(filtered);
   }, [cars, filters]);
 
-  // Check Supabase connection
-  const checkSupabaseConnection = async () => {
-    // If Supabase is not initialized due to missing credentials, return false
-    if (!supabase) {
-      console.warn("Supabase not initialized. Using local storage only.");
-      return false;
-    }
-    
-    try {
-      const { data, error } = await supabase.from('cars').select('count').limit(1);
-      if (error) {
-        console.error("Supabase connection error:", error);
-        setIsSupabaseConnected(false);
-        return false;
-      }
-      
-      setIsSupabaseConnected(true);
-      return true;
-    } catch (error) {
-      console.error("Error checking Supabase connection:", error);
-      setIsSupabaseConnected(false);
-      return false;
-    }
-  };
-
   // Sync with Supabase on component mount
   useEffect(() => {
     const initializeSupabase = async () => {
-      // Skip Supabase initialization if client wasn't created
-      if (!supabase) {
-        console.log("Supabase credentials not available. Running in local mode only.");
-        return;
-      }
-      
+      // Check connection
       const isConnected = await checkSupabaseConnection();
+      setIsSupabaseConnected(isConnected);
       
       if (isConnected) {
-        console.log("Supabase connected successfully");
+        // Initialize tables
+        await initializeSupabaseTables();
+        
+        // Sync data
         await syncWithSupabase();
         
         // Set up real-time subscription
-        const carsSubscription = supabase
+        const carsSubscription = supabase!
           .channel('cars-changes')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, payload => {
             console.log('Supabase real-time update:', payload);
@@ -229,8 +192,12 @@ export function CarProvider({ children }: { children: ReactNode }) {
           .subscribe();
           
         return () => {
-          supabase.removeChannel(carsSubscription);
+          if (supabase) {
+            supabase.removeChannel(carsSubscription);
+          }
         };
+      } else {
+        console.log('Using local storage only. To enable Supabase, set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
       }
     };
     
@@ -239,27 +206,9 @@ export function CarProvider({ children }: { children: ReactNode }) {
 
   // Sync data with Supabase
   const syncWithSupabase = async () => {
-    if (!supabase) return;
+    if (!supabase || !isSupabaseConnected) return;
     
     try {
-      // Check if we can connect to Supabase
-      const isConnected = await checkSupabaseConnection();
-      if (!isConnected) {
-        console.log('Not connected to Supabase, using local data only');
-        return;
-      }
-      
-      // Check if the table exists first
-      try {
-        // Try to create the table if it doesn't exist
-        const { error: createTableError } = await supabase.rpc('create_cars_table_if_not_exists');
-        if (createTableError) {
-          console.log('Error creating cars table:', createTableError);
-        }
-      } catch (error) {
-        console.log('Failed to check or create table, might already exist');
-      }
-      
       // Fetch cars from Supabase
       const { data: supabaseCars, error } = await supabase
         .from('cars')
@@ -287,12 +236,6 @@ export function CarProvider({ children }: { children: ReactNode }) {
       
       // Also sync transactions
       try {
-        // Create transactions table if needed
-        const { error: createTransTableError } = await supabase.rpc('create_transactions_table_if_not_exists');
-        if (createTransTableError) {
-          console.log('Error creating transactions table:', createTransTableError);
-        }
-        
         // Get transactions
         const { data: supabaseTransactions, error: transError } = await supabase
           .from('transactions')
