@@ -6,8 +6,81 @@ import { supabase, checkSupabaseConnection, initializeSupabaseTables } from '@/l
 
 // Sample car data
 const initialCars: Car[] = [
-
-  
+  {
+    id: '1',
+    brand: 'Toyota',
+    model: 'Corolla',
+    year: 2022,
+    price: 120000,
+    km: 15000,
+    color: 'Preto',
+    description: 'Toyota Corolla XEi 2.0 Flex, completo, único dono, revisões em concessionária.',
+    images: ['/cars/corolla1.jpg', '/cars/corolla2.jpg', '/cars/corolla3.jpg'],
+    featured: true,
+    status: 'available',
+    createdAt: '2023-10-15T10:30:00Z',
+    updatedAt: '2023-10-15T10:30:00Z'
+  },
+  {
+    id: '2',
+    brand: 'Honda',
+    model: 'Civic',
+    year: 2021,
+    price: 110000,
+    km: 28000,
+    color: 'Prata',
+    description: 'Honda Civic EXL 2.0, teto solar, bancos de couro, completo.',
+    images: ['/cars/civic1.jpg', '/cars/civic2.jpg'],
+    featured: false,
+    status: 'available',
+    createdAt: '2023-09-20T14:15:00Z',
+    updatedAt: '2023-09-20T14:15:00Z'
+  },
+  {
+    id: '3',
+    brand: 'Jeep',
+    model: 'Compass',
+    year: 2023,
+    price: 180000,
+    km: 5000,
+    color: 'Branco',
+    description: 'Jeep Compass Limited 2.0 Turbo Diesel 4x4, teto panorâmico, zero de entrada.',
+    images: ['/cars/compass1.jpg', '/cars/compass2.jpg', '/cars/compass3.jpg'],
+    featured: true,
+    status: 'available',
+    createdAt: '2024-01-05T09:45:00Z',
+    updatedAt: '2024-01-05T09:45:00Z'
+  },
+  {
+    id: '4',
+    brand: 'Volkswagen',
+    model: 'Golf',
+    year: 2020,
+    price: 95000,
+    km: 45000,
+    color: 'Azul',
+    description: 'VW Golf GTI 2.0 TSI, rodas 18", suspensão esportiva, perfeito estado.',
+    images: ['/cars/golf1.jpg', '/cars/golf2.jpg'],
+    featured: false,
+    status: 'available',
+    createdAt: '2023-08-12T11:20:00Z',
+    updatedAt: '2023-08-12T11:20:00Z'
+  },
+  {
+    id: '5',
+    brand: 'Hyundai',
+    model: 'HB20',
+    year: 2022,
+    price: 75000,
+    km: 22000,
+    color: 'Vermelho',
+    description: 'Hyundai HB20 1.0 Turbo, completo, multimídia, excelente consumo.',
+    images: ['/cars/hb20_1.jpg', '/cars/hb20_2.jpg'],
+    featured: true,
+    status: 'available',
+    createdAt: '2023-11-28T16:40:00Z',
+    updatedAt: '2023-11-28T16:40:00Z'
+  }
 ];
 
 // Sample transactions
