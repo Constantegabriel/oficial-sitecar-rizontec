@@ -86,3 +86,29 @@ BEGIN
   END IF;
 END;
 $$;
+
+-- Create a function to check if both tables exist
+CREATE OR REPLACE FUNCTION check_tables_exist()
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result json;
+BEGIN
+  SELECT json_build_object(
+    'cars_exists', EXISTS (
+      SELECT FROM pg_tables
+      WHERE schemaname = 'public'
+      AND tablename = 'cars'
+    ),
+    'transactions_exists', EXISTS (
+      SELECT FROM pg_tables
+      WHERE schemaname = 'public'
+      AND tablename = 'transactions'
+    )
+  ) INTO result;
+  
+  RETURN result;
+END;
+$$;

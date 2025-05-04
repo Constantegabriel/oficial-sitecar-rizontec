@@ -134,7 +134,7 @@ export default function Navbar() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md overflow-hidden">
-                    <LoginForm onClose={() => setMobileMenuOpen(false)} />
+                    <LoginForm />
                   </DialogContent>
                 </Dialog>
               )}
