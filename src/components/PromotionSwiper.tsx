@@ -1,7 +1,5 @@
 
 import { useState, useEffect } from "react";
-import { Button } from "./ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const promotions = [
@@ -126,34 +124,10 @@ export default function PromotionSwiper() {
               <p className="text-lg md:text-xl">
                 {promotion.description}
               </p>
-              <Button 
-                className="mt-4 bg-crimson hover:bg-crimson/90 text-white"
-              >
-                Ver ofertas
-              </Button>
             </div>
           </div>
         ))}
       </div>
-      
-      {/* Navigation arrows */}
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full" 
-        onClick={goToPrevSlide}
-      >
-        <ChevronLeft className="h-6 w-6" />
-      </Button>
-      
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full" 
-        onClick={goToNextSlide}
-      >
-        <ChevronRight className="h-6 w-6" />
-      </Button>
       
       {/* Indicators */}
       <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">

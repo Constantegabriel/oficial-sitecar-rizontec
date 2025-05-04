@@ -36,14 +36,21 @@ export default function CarCard({ car }: CarCardProps) {
             style={{ backgroundImage: `url(${defaultImage})` }}
           />
           
-          {car.featured && (
-            <Badge className="absolute top-2 right-2 bg-crimson">
-              Destaque
-            </Badge>
-          )}
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
+            {car.featured && (
+              <Badge className="bg-crimson">
+                Destaque
+              </Badge>
+            )}
+            {car.onSale && (
+              <Badge className="bg-green-600">
+                Promoção
+              </Badge>
+            )}
+          </div>
         </div>
         
-        <DialogContent className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:w-full top-[50%] translate-y-[-50%] rounded-md">
+        <DialogContent className="w-[95vw] max-w-3xl max-h-[85vh] overflow-y-auto p-4 sm:p-6 md:w-full fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] rounded-md animate-fade-in">
           <DialogTitle>
             <VisuallyHidden>{car.brand} {car.model} - Detalhes</VisuallyHidden>
           </DialogTitle>

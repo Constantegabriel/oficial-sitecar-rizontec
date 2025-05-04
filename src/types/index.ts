@@ -10,6 +10,7 @@ export interface Car {
   description: string;
   images: string[];
   featured: boolean;
+  onSale?: boolean;
   status: 'available' | 'sold' | 'exchanged' | 'deleted';
   createdAt: string;
   updatedAt: string;

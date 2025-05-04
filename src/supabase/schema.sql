@@ -26,6 +26,7 @@ BEGIN
       description TEXT,
       images TEXT[],
       featured BOOLEAN DEFAULT false,
+      on_sale BOOLEAN DEFAULT false,
       status TEXT DEFAULT 'available',
       created_at TIMESTAMPTZ DEFAULT now(),
       updated_at TIMESTAMPTZ DEFAULT now()

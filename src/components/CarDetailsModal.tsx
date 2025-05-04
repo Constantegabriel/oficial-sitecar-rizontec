@@ -96,9 +96,12 @@ export default function CarDetailsModal({ car }: CarDetailsModalProps) {
         <div className="text-2xl font-bold text-crimson">
           {formatCurrency(car.price)}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {car.featured && (
             <Badge className="bg-crimson">Destaque</Badge>
+          )}
+          {car.onSale && (
+            <Badge className="bg-green-600">Promoção</Badge>
           )}
         </div>
       </div>
