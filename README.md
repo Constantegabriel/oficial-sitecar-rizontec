@@ -5,11 +5,13 @@ Sistema para gestão de inventário de veículos, com funcionalidades de cadastr
 
 ## Configuração do Supabase
 
-Este projeto utiliza o Supabase como banco de dados. Para configurar:
+Para que a aplicação funcione em múltiplos dispositivos e salve os dados em nuvem, é necessário configurar o Supabase:
 
 1. Crie uma conta no [Supabase](https://supabase.com/)
 2. Crie um novo projeto
-3. Obtenha as credenciais de URL e chave anônima do seu projeto
+3. Obtenha as credenciais de URL e chave anônima do seu projeto:
+   - Vá em Project Settings > API
+   - Copie a URL do projeto e a anon key (chave anônima)
 4. Copie o arquivo `.env.example` para `.env.local` e preencha as variáveis:
 
 ```
@@ -18,6 +20,11 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 ```
 
 5. No SQL Editor do Supabase, execute o script SQL localizado em `src/supabase/schema.sql` para criar as tabelas necessárias e funções RPC.
+6. Reinicie a aplicação para que as alterações tenham efeito.
+
+### Modo Offline
+
+Caso não configure o Supabase, a aplicação funcionará em modo offline, salvando os dados apenas localmente no navegador.
 
 ## Desenvolvimento
 

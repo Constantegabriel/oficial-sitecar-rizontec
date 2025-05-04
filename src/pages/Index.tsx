@@ -6,12 +6,21 @@ import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
 
   // Initialize Supabase on app start
   useEffect(() => {
     const initApp = async () => {
-      await setupSupabase();
-      setIsLoading(false);
+      try {
+        const success = await setupSupabase();
+        setIsSetupComplete(success);
+      } catch (error) {
+        console.error("Failed to initialize Supabase:", error);
+        // Even if setup fails, we allow the app to continue in offline mode
+        setIsSetupComplete(false);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
     initApp();
@@ -27,7 +36,7 @@ const Index = () => {
   }
 
   // Redirect to home page
-  return <Navigate to="/" />;
+  return <Navigate to="/dashboard" />;
 };
 
 export default Index;
