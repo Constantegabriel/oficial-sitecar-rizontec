@@ -146,7 +146,7 @@ export default function CarDetailsModal({ car }: CarDetailsModalProps) {
       
       <div className="flex gap-2 mt-6">
         <a 
-          href={`https://wa.me/5511999999999?text=Olá, estou interessado no ${car.brand} ${car.model} ${car.year}`}
+          href={`https://wa.me/5548998143419?text=Olá, estou interessado no ${car.brand} ${car.model} ${car.year}`}
           target="_blank" 
           rel="noopener noreferrer"
           className="flex-1"
