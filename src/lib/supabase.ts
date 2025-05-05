@@ -121,36 +121,8 @@ const createTablesDirectly = async (): Promise<boolean> => {
     
     // Create cars table if it doesn't exist
     if (!carsExists) {
-      const { error: createCarsError } = await supabase.query(`
-        CREATE TABLE IF NOT EXISTS public.cars (
-          id TEXT PRIMARY KEY,
-          brand TEXT NOT NULL,
-          model TEXT NOT NULL,
-          year INTEGER NOT NULL,
-          price NUMERIC NOT NULL,
-          km INTEGER NOT NULL,
-          color TEXT NOT NULL,
-          description TEXT,
-          images TEXT[],
-          featured BOOLEAN DEFAULT false,
-          on_sale BOOLEAN DEFAULT false,
-          status TEXT DEFAULT 'available',
-          created_at TIMESTAMPTZ DEFAULT now(),
-          updated_at TIMESTAMPTZ DEFAULT now()
-        );
-        
-        ALTER TABLE public.cars ENABLE ROW LEVEL SECURITY;
-        
-        CREATE POLICY "Allow public read access" 
-          ON public.cars FOR SELECT 
-          USING (true);
-        
-        CREATE POLICY "Allow authenticated users full access" 
-          ON public.cars 
-          USING (auth.role() = 'authenticated');
-          
-        CREATE INDEX idx_cars_status ON public.cars(status);
-      `);
+      // Using raw SQL with REST API
+      const { error: createCarsError } = await supabase.rpc('create_cars_table_if_not_exists');
       
       if (createCarsError) {
         console.error('Falha ao criar tabela cars diretamente:', createCarsError);
@@ -162,24 +134,8 @@ const createTablesDirectly = async (): Promise<boolean> => {
     
     // Create transactions table if it doesn't exist
     if (!transactionsExists) {
-      const { error: createTransactionsError } = await supabase.query(`
-        CREATE TABLE IF NOT EXISTS public.transactions (
-          id TEXT PRIMARY KEY,
-          car_id TEXT REFERENCES public.cars(id),
-          type TEXT NOT NULL,
-          amount NUMERIC NOT NULL,
-          date TIMESTAMPTZ DEFAULT now(),
-          notes TEXT
-        );
-        
-        ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
-        
-        CREATE POLICY "Allow authenticated users full access" 
-          ON public.transactions 
-          USING (auth.role() = 'authenticated');
-          
-        CREATE INDEX idx_transactions_car_id ON public.transactions(car_id);
-      `);
+      // Using raw SQL with REST API
+      const { error: createTransactionsError } = await supabase.rpc('create_transactions_table_if_not_exists');
       
       if (createTransactionsError) {
         console.error('Falha ao criar tabela transactions diretamente:', createTransactionsError);
@@ -225,12 +181,13 @@ export const createCarImagesBucket = async (): Promise<boolean> => {
       
       // Create public policy for the bucket
       try {
-        const { error: policyError } = await supabase.query(`
-          INSERT INTO storage.policies (name, bucket_id, definition)
-          VALUES ('Public Access', 'cars', '(bucket_id = ''cars''::text)');
-        `);
+        // We need to use rpc to execute the SQL since .query is not available
+        const { error: policyError } = await supabase.rpc('create_storage_policy', {
+          bucket_id: 'cars',
+          policy_name: 'Public Access'
+        });
         
-        if (policyError && !policyError.message.includes('duplicate')) {
+        if (policyError && !policyError.message?.includes('duplicate')) {
           console.error("Erro ao criar política para o bucket:", policyError);
         }
       } catch (policyError) {
@@ -254,27 +211,23 @@ export const enableRealtimeForCars = async (): Promise<boolean> => {
   if (!supabase) return false;
   
   try {
-    // First check if realtime is already enabled
-    const { error: checkError } = await supabase.query(`
-      SELECT * FROM pg_publication WHERE pubname = 'supabase_realtime';
-    `);
+    // First check if realtime is already enabled using rpc
+    const { error: checkError } = await supabase.rpc('check_realtime_enabled');
     
     if (!checkError) {
       // Enable full replica identity for the cars table
-      const { error: replicaError } = await supabase.query(`
-        ALTER TABLE cars REPLICA IDENTITY FULL;
-      `);
+      const { error: replicaError } = await supabase.rpc('set_replica_identity_full_for_cars');
       
-      if (replicaError && !replicaError.message.includes('already')) {
+      if (replicaError && !replicaError.message?.includes('already')) {
         console.error('Erro ao configurar REPLICA IDENTITY:', replicaError);
       }
       
       // Add the cars table to the supabase_realtime publication
-      const { error: pubError } = await supabase.query(`
-        ALTER PUBLICATION supabase_realtime ADD TABLE cars;
-      `);
+      const { error: pubError } = await supabase.rpc('add_table_to_publication', {
+        table_name: 'cars'
+      });
       
-      if (pubError && !pubError.message.includes('already')) {
+      if (pubError && !pubError.message?.includes('already')) {
         console.error('Erro ao adicionar tabela à publicação de realtime:', pubError);
         return false;
       }
@@ -286,3 +239,4 @@ export const enableRealtimeForCars = async (): Promise<boolean> => {
     return false;
   }
 };
+
