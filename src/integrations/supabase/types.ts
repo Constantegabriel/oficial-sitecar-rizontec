@@ -15,7 +15,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_tables_exist: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      create_cars_table_if_not_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      create_transactions_table_if_not_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

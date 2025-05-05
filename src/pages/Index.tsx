@@ -2,6 +2,7 @@
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { setupSupabase } from "@/utils/supabaseSetup";
+import { createCarImagesBucket } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
 
 const Index = () => {
@@ -12,9 +13,14 @@ const Index = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
-        // Tentar inicializar Supabase, mas não bloquear se falhar
+        // Tentar inicializar Supabase
         const success = await setupSupabase().catch(() => false);
         setIsSetupComplete(success);
+        
+        // Criar bucket para imagens se o Supabase estiver conectado
+        if (success) {
+          await createCarImagesBucket();
+        }
       } catch (error) {
         console.error("Falha ao inicializar Supabase:", error);
         // Even if setup fails, we allow the app to continue in offline mode

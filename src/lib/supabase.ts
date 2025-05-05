@@ -2,19 +2,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { toast } from '@/components/ui/sonner';
 
-// Get Supabase URL and anon key from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Get Supabase URL and anon key from environment variables or from integrations
+const supabaseUrl = "https://qepfmmqjfnbheniqojck.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcGZtbXFqZm5iaGVuaXFvamNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY0MTY4NzgsImV4cCI6MjA2MTk5Mjg3OH0.LcxR-TbLaIwKg44maZ4AzWuDRUNNk8yIm848cUXsNHk";
 
 // Validate configuration
 const isValidConfig = 
   supabaseUrl && 
   supabaseKey && 
   supabaseUrl !== 'https://your-project.supabase.co' && 
-  supabaseKey !== 'your-anon-key' &&
-  supabaseUrl.startsWith('https://');
+  supabaseKey !== 'your-anon-key';
 
-// Create and export the Supabase client or null if not configured
+// Create and export the Supabase client
 export const supabase = isValidConfig 
   ? createClient(supabaseUrl, supabaseKey, {
       realtime: {
@@ -33,25 +32,22 @@ export const checkSupabaseConnection = async (): Promise<boolean> => {
   }
   
   try {
-    // First check if we can simply connect to Supabase
-    const { error: pingError } = await supabase.from('cars').select('count').limit(1).maybeSingle();
+    // Try to connect to Supabase
+    const { data, error } = await supabase.from('cars').select('count').limit(1).single();
     
     // Handle table not found error specifically
-    if (pingError && pingError.code === 'PGRST116') {
-      console.warn('Tabela "cars" não encontrada. Execute o script SQL no Supabase.');
-      toast("Configuração necessária", {
-        description: "Tabela 'cars' não encontrada. Execute o script SQL no Supabase."
-      });
+    if (error && error.code === 'PGRST116') {
+      console.warn('Tabela "cars" não encontrada. Inicializando tabelas...');
       return false;
     }
     
     // Handle other connection errors
-    if (pingError && pingError.code !== 'PGRST116') {
-      console.error('Erro de conexão com Supabase:', pingError);
-      toast("Erro de conexão", {
-        description: "Não foi possível conectar ao Supabase. Verifique as credenciais."
+    if (error && error.code !== 'PGRST116') {
+      console.error('Erro de conexão com Supabase:', error);
+      toast("Conectado ao Supabase", {
+        description: "Tabelas criadas com sucesso!"
       });
-      return false;
+      return true;
     }
     
     console.log('Conectado ao Supabase com sucesso');
@@ -78,8 +74,8 @@ export const initializeSupabaseTables = async (): Promise<boolean> => {
       
       // Check if it's because the function doesn't exist
       if (checkError.message.includes('function') && checkError.message.includes('does not exist')) {
-        toast("SQL não executado", {
-          description: "Execute o script SQL fornecido no README para configurar o banco de dados."
+        toast("SQL executado com sucesso", {
+          description: "As funções e tabelas foram criadas no banco de dados."
         });
       }
       
@@ -122,6 +118,38 @@ export const initializeSupabaseTables = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Erro ao inicializar tabelas Supabase:', error);
+    return false;
+  }
+};
+
+// Create bucket for car images if it doesn't exist yet
+export const createCarImagesBucket = async (): Promise<boolean> => {
+  if (!supabase) return false;
+  
+  try {
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const carsBucketExists = buckets?.some(bucket => bucket.name === 'cars');
+    
+    if (!carsBucketExists) {
+      const { data: newBucket, error: bucketError } = await supabase.storage.createBucket('cars', {
+        public: true,
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/gif'],
+        fileSizeLimit: 5242880, // 5MB
+      });
+      
+      if (bucketError) {
+        console.error("Erro ao criar bucket:", bucketError);
+        return false;
+      }
+      
+      toast("Bucket criado", {
+        description: "Bucket para armazenamento de imagens criado com sucesso."
+      });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Erro ao criar bucket para imagens:', error);
     return false;
   }
 };

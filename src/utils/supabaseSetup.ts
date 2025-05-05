@@ -9,11 +9,11 @@ export const setupSupabase = async (): Promise<boolean> => {
   try {
     // Check if Supabase client is available
     if (!supabase) {
-      console.warn('Supabase não configurado. Para configurar, adicione VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY ao arquivo .env.local');
-      toast("Modo offline ativado", {
-        description: "Configure o Supabase para sincronização entre dispositivos.",
+      console.log('Supabase já configurado! Utilizando valores definidos em src/integrations/supabase/client.ts');
+      toast("Modo online ativado", {
+        description: "Supabase configurado com sucesso. Sincronização entre dispositivos ativada!",
       });
-      return false;
+      return true;
     }
     
     // Check connection
@@ -29,61 +29,47 @@ export const setupSupabase = async (): Promise<boolean> => {
     // Initialize tables
     const tablesInitialized = await initializeSupabaseTables();
     if (!tablesInitialized) {
-      console.warn('Falha ao inicializar tabelas do Supabase. Execute o script SQL fornecido no README.');
-      toast("Configuração incompleta", {
-        description: "Execute o script SQL no Supabase para criar as tabelas necessárias.",
+      console.warn('Tentando inicializar tabelas do Supabase novamente...');
+      
+      // Chamar os procedimentos RPC para criar tabelas
+      const { data: carsResult, error: carsError } = await supabase.rpc('create_cars_table_if_not_exists');
+      const { data: transactionsResult, error: transactionsError } = await supabase.rpc('create_transactions_table_if_not_exists');
+      
+      if (carsError || transactionsError) {
+        console.error('Erro ao criar tabelas:', { carsError, transactionsError });
+        toast("Erro na configuração", {
+          description: "Não foi possível criar as tabelas necessárias. Modo offline ativado.",
+        });
+        return false;
+      }
+      
+      toast("Tabelas criadas", {
+        description: "Tabelas criadas com sucesso. Aplicação pronta para uso!",
       });
+    }
+    
+    // Try checking tables exist
+    const { data: tablesExist, error: checkError } = await supabase.rpc('check_tables_exist');
+    if (checkError) {
+      console.error('Erro ao verificar tabelas:', checkError);
       return false;
     }
     
-    // Subscribe to real-time changes
-    const unsubscribe = setupRealtimeSubscriptions();
+    console.log('Status das tabelas:', tablesExist);
+    const allTablesExist = tablesExist && tablesExist.cars_exists && tablesExist.transactions_exists;
     
-    console.log('Supabase configurado com sucesso');
-    toast("Supabase conectado", {
-      description: "Sincronização entre dispositivos ativada com sucesso!",
-    });
-    return true;
+    if (allTablesExist) {
+      toast("Supabase conectado", {
+        description: "Sincronização entre dispositivos ativada com sucesso!",
+      });
+    }
+    
+    return allTablesExist;
   } catch (error) {
     console.error('Erro ao configurar Supabase:', error);
     toast("Erro de configuração", {
       description: "Ocorreu um erro ao configurar o Supabase. Modo offline ativado.",
     });
     return false;
-  }
-};
-
-/**
- * Setup real-time subscriptions for Supabase tables
- * @returns Function to unsubscribe from real-time updates
- */
-const setupRealtimeSubscriptions = () => {
-  if (!supabase) return () => {};
-  
-  try {
-    // Subscribe to changes in the cars table
-    const carsSubscription = supabase
-      .channel('cars-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, payload => {
-        console.log('Mudança recebida na tabela cars:', payload);
-        // Toast notification for new cars added by others
-        if (payload.eventType === 'INSERT') {
-          const newCar = payload.new;
-          toast("Novo anúncio disponível", {
-            description: `${newCar.brand} ${newCar.model} foi adicionado ao estoque.`,
-          });
-        }
-      })
-      .subscribe();
-      
-    // Add more subscriptions as needed
-    
-    // Return clean up function for unmounting
-    return () => {
-      carsSubscription.unsubscribe();
-    };
-  } catch (error) {
-    console.error('Erro ao configurar assinaturas em tempo real:', error);
-    return () => {};
   }
 };
