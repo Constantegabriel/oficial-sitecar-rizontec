@@ -90,7 +90,7 @@ export default function HomePage() {
                 Instagram
               </a>
               <a 
-                href="https://wa.me/5511999999999" 
+                href="https://wa.me/5548998143419" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="bg-[#25D366] text-white py-3 px-6 rounded-lg flex items-center"

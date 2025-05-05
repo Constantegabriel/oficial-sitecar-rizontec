@@ -43,23 +43,24 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside 
-      className={cn(
-        "bg-secondary fixed top-0 left-0 h-screen flex flex-col transition-all duration-300 border-r border-border z-10",
-        collapsed ? "w-16" : "w-64"
+  <aside 
+    className={cn(
+      "bg-secondary fixed top-0 left-0 h-screen flex flex-col transition-all duration-300 border-r border-border z-10",
+      collapsed ? "w-16" : "w-64"
+    )}
+  >
+    <div className="flex items-center justify-center p-4 border-b border-border">
+      {!collapsed ? (
+        <Link to="/" className="text-xl font-bold">
+          <span className="text-crimson">Rizon</span>Tec
+        </Link>
+      ) : (
+        <span className="text-2xl font-bold text-crimson">RT</span>
       )}
-    >
-      <div className="flex items-center justify-center p-4 border-b border-border">
-        {!collapsed ? (
-          <Link to="/" className="text-xl font-bold">
-            <span className="text-crimson">Rizon</span>Tec
-          </Link>
-        ) : (
-          <span className="text-2xl font-bold text-crimson">RT</span>
-        )}
-      </div>
-      
-      <div className="flex flex-col gap-1 p-2 flex-1 overflow-y-auto">
+    </div>
+  
+    <div className="flex flex-col justify-between h-full">
+      <div className="flex flex-col gap-1 p-2 grow overflow-y-auto">
         {links.map((link) => (
           <Link
             key={link.path}
@@ -76,8 +77,8 @@ export default function Sidebar() {
           </Link>
         ))}
       </div>
-      
-      <div className="p-2 border-t border-border">
+  
+      <div className="p-2 border-t border-border mt-4">
         <Button 
           variant="destructive" 
           className="w-full justify-start mb-2"
@@ -96,6 +97,8 @@ export default function Sidebar() {
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </Button>
       </div>
-    </aside>
+    </div>
+  </aside>
+  
   );
 }

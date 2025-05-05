@@ -92,7 +92,7 @@ export default function CarCard({ car }: CarCardProps) {
             </Button>
             
             <a 
-              href={`https://wa.me/5511999999999?text=Olá, estou interessado no ${car.brand} ${car.model} ${car.year}`}
+              href={`https://wa.me/5548998143419?text=Olá, estou interessado no ${car.brand} ${car.model} ${car.year}`}
               target="_blank" 
               rel="noopener noreferrer"
               className="flex-1"
