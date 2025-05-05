@@ -1,6 +1,7 @@
 
-import { supabase, checkSupabaseConnection, initializeSupabaseTables } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/sonner";
+import { checkSupabaseConnection, initializeSupabaseTables, createCarImagesBucket, enableRealtimeForCars } from "@/lib/supabase";
 
 /**
  * Setup Supabase connection and initialize tables if needed
@@ -9,11 +10,11 @@ export const setupSupabase = async (): Promise<boolean> => {
   try {
     // Check if Supabase client is available
     if (!supabase) {
-      console.log('Supabase já configurado! Utilizando valores definidos em src/integrations/supabase/client.ts');
-      toast("Modo online ativado", {
-        description: "Supabase configurado com sucesso. Sincronização entre dispositivos ativada!",
+      console.error('Supabase não inicializado. Verifique sua configuração.');
+      toast("Modo offline ativado", {
+        description: "Não foi possível inicializar o Supabase. Usando armazenamento local apenas.",
       });
-      return true;
+      return false;
     }
     
     // Check connection
@@ -26,45 +27,48 @@ export const setupSupabase = async (): Promise<boolean> => {
       return false;
     }
     
+    console.log('Conexão com Supabase estabelecida. Inicializando tabelas...');
+    
     // Initialize tables
     const tablesInitialized = await initializeSupabaseTables();
     if (!tablesInitialized) {
-      console.warn('Tentando inicializar tabelas do Supabase novamente...');
+      console.warn('Falha ao inicializar tabelas do Supabase. Tentando novamente...');
       
-      // Chamar os procedimentos RPC para criar tabelas
-      const { data: carsResult, error: carsError } = await supabase.rpc('create_cars_table_if_not_exists');
-      const { data: transactionsResult, error: transactionsError } = await supabase.rpc('create_transactions_table_if_not_exists');
-      
-      if (carsError || transactionsError) {
-        console.error('Erro ao criar tabelas:', { carsError, transactionsError });
-        toast("Erro na configuração", {
-          description: "Não foi possível criar as tabelas necessárias. Modo offline ativado.",
+      // Second attempt with direct queries
+      const secondAttempt = await initializeSupabaseTables();
+      if (!secondAttempt) {
+        toast("Erro na inicialização", {
+          description: "Não foi possível inicializar as tabelas no Supabase. Modo offline ativado.",
         });
         return false;
       }
-      
-      toast("Tabelas criadas", {
-        description: "Tabelas criadas com sucesso. Aplicação pronta para uso!",
-      });
     }
     
-    // Try checking tables exist
-    const { data: tablesExist, error: checkError } = await supabase.rpc('check_tables_exist');
-    if (checkError) {
-      console.error('Erro ao verificar tabelas:', checkError);
+    // Create bucket for car images
+    await createCarImagesBucket();
+    
+    // Enable realtime for cars table
+    await enableRealtimeForCars();
+    
+    // Final check if everything is working
+    try {
+      // Try a simple query to verify tables exist
+      const { data: carCount, error: countError } = await supabase.from('cars').select('*', { count: 'exact', head: true });
+      
+      if (countError) {
+        console.error("Erro na verificação final:", countError);
+        return false;
+      }
+      
+      toast("Supabase conectado", {
+        description: "Sistema online e sincronização entre dispositivos ativada!",
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Erro na verificação final:", error);
       return false;
     }
-    
-    console.log('Status das tabelas:', tablesExist);
-    const allTablesExist = tablesExist && tablesExist.cars_exists && tablesExist.transactions_exists;
-    
-    if (allTablesExist) {
-      toast("Supabase conectado", {
-        description: "Sincronização entre dispositivos ativada com sucesso!",
-      });
-    }
-    
-    return allTablesExist;
   } catch (error) {
     console.error('Erro ao configurar Supabase:', error);
     toast("Erro de configuração", {

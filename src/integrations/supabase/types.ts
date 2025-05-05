@@ -9,7 +9,92 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cars: {
+        Row: {
+          brand: string
+          color: string
+          created_at: string | null
+          description: string | null
+          featured: boolean | null
+          id: string
+          images: string[] | null
+          km: number
+          model: string
+          on_sale: boolean | null
+          price: number
+          status: string | null
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          brand: string
+          color: string
+          created_at?: string | null
+          description?: string | null
+          featured?: boolean | null
+          id: string
+          images?: string[] | null
+          km: number
+          model: string
+          on_sale?: boolean | null
+          price: number
+          status?: string | null
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          brand?: string
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          images?: string[] | null
+          km?: number
+          model?: string
+          on_sale?: boolean | null
+          price?: number
+          status?: string | null
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          car_id: string | null
+          date: string | null
+          id: string
+          notes: string | null
+          type: string
+        }
+        Insert: {
+          amount: number
+          car_id?: string | null
+          date?: string | null
+          id: string
+          notes?: string | null
+          type: string
+        }
+        Update: {
+          amount?: number
+          car_id?: string | null
+          date?: string | null
+          id?: string
+          notes?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_car_id_fkey"
+            columns: ["car_id"]
+            isOneToOne: false
+            referencedRelation: "cars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
