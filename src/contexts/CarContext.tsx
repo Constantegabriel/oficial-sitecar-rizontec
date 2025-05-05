@@ -2,8 +2,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Car, Transaction, CarFilters } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { toast } from '@/components/ui/sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 // Sample car data
 const initialCars: Car[] = [
@@ -114,8 +112,7 @@ export function CarProvider({ children }: { children: ReactNode }) {
   
   const [filters, setFilters] = useState<CarFilters>({});
   const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
-  const { toast: uiToast } = useToast();
-  const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
+  const { toast } = useToast();
 
   // Save cars to localStorage whenever they change
   useEffect(() => {
@@ -145,230 +142,6 @@ export function CarProvider({ children }: { children: ReactNode }) {
     setFilteredCars(filtered);
   }, [cars, filters]);
 
-  // Check Supabase connection and sync on component mount
-  useEffect(() => {
-    const checkConnection = async () => {
-      if (!supabase) {
-        console.log("Supabase não está disponível. Usando armazenamento local apenas.");
-        return false;
-      }
-      
-      try {
-        const { error } = await supabase.from('cars').select('count').limit(1).single();
-        if (!error) {
-          console.log("Conexão com Supabase estabelecida com sucesso.");
-          return true;
-        } else {
-          console.error("Erro ao verificar conexão com Supabase:", error);
-          return false;
-        }
-      } catch (error) {
-        console.error("Erro ao verificar conexão com Supabase:", error);
-        return false;
-      }
-    };
-
-    const initializeSupabase = async () => {
-      // Check connection
-      const isConnected = await checkConnection();
-      setIsSupabaseConnected(isConnected);
-      
-      if (isConnected) {
-        // Sync data
-        await syncWithSupabase();
-        
-        // Set up real-time subscription for cars
-        const carsSubscription = supabase
-          .channel('cars-changes')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'cars' }, payload => {
-            console.log('Supabase real-time update:', payload);
-            
-            // Handle different event types
-            if (payload.eventType === 'INSERT') {
-              const newCar = payload.new as Car;
-              setCars(prevCars => {
-                // Check if car already exists
-                const exists = prevCars.some(car => car.id === newCar.id);
-                if (!exists) {
-                  toast("Novo anúncio adicionado!", {
-                    description: `${newCar.brand} ${newCar.model} foi adicionado ao estoque.`
-                  });
-                  return [...prevCars, newCar];
-                }
-                return prevCars;
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedCar = payload.new as Car;
-              setCars(prevCars => 
-                prevCars.map(car => car.id === updatedCar.id ? updatedCar : car)
-              );
-            } else if (payload.eventType === 'DELETE') {
-              const deletedCarId = payload.old.id;
-              setCars(prevCars => 
-                prevCars.filter(car => car.id !== deletedCarId)
-              );
-            }
-          })
-          .subscribe();
-          
-        // Set up real-time subscription for transactions
-        const transactionsSubscription = supabase
-          .channel('transactions-changes')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, payload => {
-            console.log('Supabase real-time transaction update:', payload);
-            
-            // Handle different event types
-            if (payload.eventType === 'INSERT') {
-              const newTransaction = payload.new as Transaction;
-              setTransactions(prevTransactions => {
-                // Check if transaction already exists
-                const exists = prevTransactions.some(transaction => transaction.id === newTransaction.id);
-                if (!exists) {
-                  return [...prevTransactions, newTransaction];
-                }
-                return prevTransactions;
-              });
-            } else if (payload.eventType === 'UPDATE') {
-              const updatedTransaction = payload.new as Transaction;
-              setTransactions(prevTransactions => 
-                prevTransactions.map(transaction => 
-                  transaction.id === updatedTransaction.id ? updatedTransaction : transaction
-                )
-              );
-            } else if (payload.eventType === 'DELETE') {
-              const deletedTransactionId = payload.old.id;
-              setTransactions(prevTransactions => 
-                prevTransactions.filter(transaction => transaction.id !== deletedTransactionId)
-              );
-            }
-          })
-          .subscribe();
-        
-        return () => {
-          // Cleanup subscriptions on unmount
-          if (supabase) {
-            supabase.removeChannel(carsSubscription);
-            supabase.removeChannel(transactionsSubscription);
-          }
-        };
-      }
-    };
-    
-    initializeSupabase();
-  }, []);
-
-  // Sync data with Supabase
-  const syncWithSupabase = async () => {
-    if (!supabase || !isSupabaseConnected) return;
-    
-    try {
-      // Fetch cars from Supabase
-      const { data: supabaseCars, error } = await supabase
-        .from('cars')
-        .select('*');
-        
-      if (error) {
-        console.error('Erro ao obter carros do Supabase:', error);
-        return;
-      }
-      
-      // Process data from Supabase
-      if (supabaseCars && supabaseCars.length > 0) {
-        console.log('Carros carregados do Supabase:', supabaseCars.length);
-        
-        // Convert Supabase data to match our Car type
-        const formattedCars: Car[] = supabaseCars.map(car => ({
-          id: car.id,
-          brand: car.brand,
-          model: car.model,
-          year: car.year,
-          price: car.price,
-          km: car.km,
-          color: car.color,
-          description: car.description || '',
-          images: car.images || [],
-          featured: car.featured || false,
-          onSale: car.on_sale || false,
-          status: car.status as 'available' | 'sold' | 'exchanged' | 'deleted',
-          createdAt: car.created_at || new Date().toISOString(),
-          updatedAt: car.updated_at || new Date().toISOString()
-        }));
-        
-        setCars(formattedCars);
-      } else {
-        // If no data in Supabase yet, push local data to Supabase
-        console.log('Sem carros no Supabase, inicializando com dados locais');
-        for (const car of cars) {
-          // Convert our Car type to match Supabase schema
-          const supabaseCar = {
-            id: car.id,
-            brand: car.brand,
-            model: car.model,
-            year: car.year,
-            price: car.price,
-            km: car.km,
-            color: car.color,
-            description: car.description,
-            images: car.images,
-            featured: car.featured,
-            on_sale: car.onSale || false,
-            status: car.status,
-            created_at: car.createdAt,
-            updated_at: car.updatedAt
-          };
-          
-          const { error } = await supabase.from('cars').upsert(supabaseCar);
-          if (error) {
-            console.error('Erro ao inserir carro no Supabase:', error);
-          }
-        }
-      }
-      
-      // Sync transactions
-      const { data: supabaseTransactions, error: transError } = await supabase
-        .from('transactions')
-        .select('*');
-        
-      if (!transError && supabaseTransactions && supabaseTransactions.length > 0) {
-        console.log('Transações carregadas do Supabase:', supabaseTransactions.length);
-        
-        // Convert Supabase data to match our Transaction type
-        const formattedTransactions: Transaction[] = supabaseTransactions.map(transaction => ({
-          id: transaction.id,
-          carId: transaction.car_id,
-          type: transaction.type as 'sale' | 'exchange',
-          amount: transaction.amount,
-          date: transaction.date || new Date().toISOString(),
-          notes: transaction.notes
-        }));
-        
-        setTransactions(formattedTransactions);
-      } else if (!transError) {
-        // Push local transactions to Supabase
-        console.log('Sem transações no Supabase, inicializando com dados locais');
-        
-        for (const transaction of transactions) {
-          // Convert our Transaction type to match Supabase schema
-          const supabaseTransaction = {
-            id: transaction.id,
-            car_id: transaction.carId,
-            type: transaction.type,
-            amount: transaction.amount,
-            date: transaction.date,
-            notes: transaction.notes
-          };
-          
-          const { error } = await supabase.from('transactions').upsert(supabaseTransaction);
-          if (error) {
-            console.error('Erro ao inserir transação no Supabase:', error);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Erro ao sincronizar com Supabase:', error);
-    }
-  };
-
   const addCar = async (carData: Omit<Car, 'id' | 'createdAt' | 'updatedAt' | 'status'>) => {
     try {
       const now = new Date().toISOString();
@@ -383,43 +156,10 @@ export function CarProvider({ children }: { children: ReactNode }) {
       // Add to local state
       setCars(prevCars => [...prevCars, newCar]);
       
-      // Try to add to Supabase if available
-      if (isSupabaseConnected && supabase) {
-        // Convert our Car type to match Supabase schema
-        const supabaseCar = {
-          id: newCar.id,
-          brand: newCar.brand,
-          model: newCar.model,
-          year: newCar.year,
-          price: newCar.price,
-          km: newCar.km,
-          color: newCar.color,
-          description: newCar.description,
-          images: newCar.images,
-          featured: newCar.featured,
-          on_sale: newCar.onSale || false,
-          status: newCar.status,
-          created_at: newCar.createdAt,
-          updated_at: newCar.updatedAt
-        };
-        
-        const { error } = await supabase.from('cars').insert(supabaseCar);
-        if (error) {
-          console.error('Erro ao adicionar carro no Supabase:', error);
-          toast("Erro ao sincronizar", {
-            description: "Veículo salvo localmente, mas houve um erro ao sincronizar com o servidor."
-          });
-        } else {
-          toast("Anúncio adicionado", {
-            description: `${newCar.brand} ${newCar.model} foi adicionado e sincronizado.`
-          });
-        }
-      } else {
-        uiToast({
-          title: 'Anúncio adicionado localmente',
-          description: `${newCar.brand} ${newCar.model} foi adicionado ao estoque local.`
-        });
-      }
+      toast({
+        title: 'Anúncio adicionado',
+        description: `${newCar.brand} ${newCar.model} foi adicionado ao estoque.`
+      });
       
       return Promise.resolve();
     } catch (error) {
@@ -444,41 +184,10 @@ export function CarProvider({ children }: { children: ReactNode }) {
         )
       );
       
-      // Try to update in Supabase if available
-      if (isSupabaseConnected && supabase) {
-        // Convert our Car type to match Supabase schema
-        const supabaseCarUpdate = {
-          ...Object.entries(updatedData).reduce((acc, [key, value]) => {
-            // Convert camelCase to snake_case for Supabase
-            if (key === 'updatedAt') acc.updated_at = value;
-            else if (key === 'createdAt') acc.created_at = value;
-            else if (key === 'onSale') acc.on_sale = value;
-            else acc[key] = value;
-            return acc;
-          }, {} as Record<string, any>)
-        };
-        
-        const { error } = await supabase
-          .from('cars')
-          .update(supabaseCarUpdate)
-          .eq('id', id);
-          
-        if (error) {
-          console.error('Erro ao atualizar carro no Supabase:', error);
-          toast("Erro ao sincronizar", {
-            description: "Alterações salvas localmente, mas houve um erro ao sincronizar com o servidor."
-          });
-        } else {
-          toast("Anúncio atualizado", {
-            description: "As alterações foram salvas e sincronizadas com sucesso."
-          });
-        }
-      } else {
-        uiToast({
-          title: 'Anúncio atualizado',
-          description: 'As alterações foram salvas localmente.'
-        });
-      }
+      toast({
+        title: 'Anúncio atualizado',
+        description: 'As alterações foram salvas.'
+      });
       
       return Promise.resolve();
     } catch (error) {
@@ -518,68 +227,18 @@ export function CarProvider({ children }: { children: ReactNode }) {
         };
         
         setTransactions(prev => [...prev, newTransaction]);
-        
-        // Add transaction to Supabase if connected
-        if (isSupabaseConnected && supabase) {
-          try {
-            // Convert our Transaction type to match Supabase schema
-            const supabaseTransaction = {
-              id: newTransaction.id,
-              car_id: newTransaction.carId,
-              type: newTransaction.type,
-              amount: newTransaction.amount,
-              date: newTransaction.date,
-              notes: newTransaction.notes
-            };
-            
-            await supabase.from('transactions').insert(supabaseTransaction);
-          } catch (transactionError) {
-            console.error('Erro ao adicionar transação no Supabase:', transactionError);
-          }
-        }
       }
       
-      // Try to update in Supabase if available
-      if (isSupabaseConnected && supabase) {
-        // Convert our Car type to match Supabase schema for update
-        const supabaseCarUpdate = {
-          status: updatedCar.status,
-          updated_at: updatedCar.updatedAt
-        };
-        
-        const { error: carError } = await supabase
-          .from('cars')
-          .update(supabaseCarUpdate)
-          .eq('id', id);
-          
-        if (carError) {
-          console.error('Erro ao atualizar status do carro no Supabase:', carError);
-          toast("Erro ao sincronizar", {
-            description: "Alterações salvas localmente, mas houve um erro ao sincronizar com o servidor."
-          });
-        } else {
-          if (status === 'deleted') {
-            toast("Anúncio excluído", {
-              description: `${car.brand} ${car.model} foi removido do estoque.`
-            });
-          } else {
-            toast(status === 'sold' ? 'Carro vendido' : 'Carro trocado', {
-              description: `${car.brand} ${car.model} foi ${status === 'sold' ? 'vendido' : 'trocado'} por ${formatCurrency(amount)}.`
-            });
-          }
-        }
+      if (status === 'deleted') {
+        toast({
+          title: 'Anúncio excluído',
+          description: `${car.brand} ${car.model} foi removido do estoque.`
+        });
       } else {
-        if (status === 'deleted') {
-          uiToast({
-            title: 'Anúncio excluído',
-            description: `${car.brand} ${car.model} foi removido do estoque.`
-          });
-        } else {
-          uiToast({
-            title: status === 'sold' ? 'Carro vendido' : 'Carro trocado',
-            description: `${car.brand} ${car.model} foi ${status === 'sold' ? 'vendido' : 'trocado'} por R$ ${amount.toLocaleString('pt-BR')}.`
-          });
-        }
+        toast({
+          title: status === 'sold' ? 'Carro vendido' : 'Carro trocado',
+          description: `${car.brand} ${car.model} foi ${status === 'sold' ? 'vendido' : 'trocado'} por R$ ${amount.toLocaleString('pt-BR')}.`
+        });
       }
       
       return Promise.resolve();

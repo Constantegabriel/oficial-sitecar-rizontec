@@ -45,7 +45,7 @@ export default function Sidebar() {
   return (
     <aside 
       className={cn(
-        "bg-secondary h-screen flex flex-col transition-all duration-300 border-r border-border",
+        "bg-secondary fixed top-0 left-0 h-screen flex flex-col transition-all duration-300 border-r border-border z-10",
         collapsed ? "w-16" : "w-64"
       )}
     >
@@ -59,7 +59,7 @@ export default function Sidebar() {
         )}
       </div>
       
-      <div className="flex flex-col gap-1 p-2 flex-1">
+      <div className="flex flex-col gap-1 p-2 flex-1 overflow-y-auto">
         {links.map((link) => (
           <Link
             key={link.path}
@@ -79,8 +79,8 @@ export default function Sidebar() {
       
       <div className="p-2 border-t border-border">
         <Button 
-          variant="ghost" 
-          className="w-full justify-start"
+          variant="destructive" 
+          className="w-full justify-start mb-2"
           onClick={logout}
         >
           <LogOut size={20} className="mr-2" />
@@ -88,9 +88,9 @@ export default function Sidebar() {
         </Button>
         
         <Button 
-          variant="ghost" 
+          variant="outline" 
           size="icon" 
-          className="w-full mt-2"
+          className="w-full"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}

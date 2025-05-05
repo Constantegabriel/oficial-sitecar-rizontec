@@ -100,6 +100,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_table_to_publication: {
+        Args: { table_name: string }
+        Returns: undefined
+      }
+      check_realtime_enabled: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       check_tables_exist: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -108,7 +116,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_storage_policy: {
+        Args: { bucket_id: string; policy_name: string }
+        Returns: undefined
+      }
       create_transactions_table_if_not_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      set_replica_identity_full_for_cars: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
