@@ -3,15 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 import { toast } from '@/components/ui/sonner';
 
 // Get Supabase URL and anon key from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Validate configuration
 const isValidConfig = 
   supabaseUrl && 
   supabaseKey && 
   supabaseUrl !== 'https://your-project.supabase.co' && 
-  supabaseKey !== 'your-anon-key';
+  supabaseKey !== 'your-anon-key' &&
+  supabaseUrl.startsWith('https://');
 
 // Create and export the Supabase client or null if not configured
 export const supabase = isValidConfig 

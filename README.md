@@ -12,7 +12,7 @@ Para que a aplicação funcione em múltiplos dispositivos e salve os dados em n
 3. Obtenha as credenciais de URL e chave anônima do seu projeto:
    - Vá em Project Settings > API
    - Copie a URL do projeto e a anon key (chave anônima)
-4. Copie o arquivo `.env.example` para `.env.local` e preencha as variáveis:
+4. Crie um novo arquivo chamado `.env.local` na pasta raiz do projeto (mesma pasta do README.md) e adicione suas credenciais:
 
 ```
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
@@ -21,6 +21,14 @@ VITE_SUPABASE_ANON_KEY=sua-chave-anonima
 
 5. No SQL Editor do Supabase, execute o script SQL localizado em `src/supabase/schema.sql` para criar as tabelas necessárias e funções RPC.
 6. Reinicie a aplicação para que as alterações tenham efeito.
+
+### Resolução de problemas comuns
+
+- Se você ver a mensagem "Modo offline ativado", verifique se:
+  - Criou o arquivo `.env.local` (não .env)
+  - As credenciais estão corretas
+  - A URL do Supabase começa com https://
+- Se você ver a mensagem "SQL não executado", execute o script SQL no editor do Supabase
 
 ### Modo Offline
 

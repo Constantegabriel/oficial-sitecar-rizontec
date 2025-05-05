@@ -12,14 +12,16 @@ const Index = () => {
   useEffect(() => {
     const initApp = async () => {
       try {
-        const success = await setupSupabase();
+        // Tentar inicializar Supabase, mas não bloquear se falhar
+        const success = await setupSupabase().catch(() => false);
         setIsSetupComplete(success);
       } catch (error) {
-        console.error("Failed to initialize Supabase:", error);
+        console.error("Falha ao inicializar Supabase:", error);
         // Even if setup fails, we allow the app to continue in offline mode
         setIsSetupComplete(false);
       } finally {
-        setIsLoading(false);
+        // Sempre permitir que o aplicativo continue, mesmo sem Supabase
+        setTimeout(() => setIsLoading(false), 500); // Pequeno atraso para evitar flashes
       }
     };
     
@@ -30,12 +32,12 @@ const Index = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-crimson" />
-        <span className="ml-2 text-lg">Conectando ao banco de dados...</span>
+        <span className="ml-2 text-lg">Inicializando aplicação...</span>
       </div>
     );
   }
 
-  // Redirect to home page
+  // Redirect to dashboard page
   return <Navigate to="/dashboard" />;
 };
 
